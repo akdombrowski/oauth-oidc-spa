@@ -39,28 +39,42 @@ function App() {
     body.append("redirect_uri", redirectURI);
     body.append("client_id", clientID);
 
-    const response = await fetch(tokenEndpoint, {
-      method: "POST",
-      body: body,
-    });
+    try {
+      const response = await fetch(tokenEndpoint, {
+        method: "POST",
+        body: body,
+      });
 
-    const json = await response.json();
+      const json = await response.json();
 
-    setToken(json);
-    console.log(json);
+      if (json.error) {
+        console.error(json);
+        throw new Error("Failed to fetch token", {
+          cause: json.error + "\n" + json.error_description,
+        });
+      }
+      setToken(json);
+      console.log(json);
+    } catch (e) {
+      console.error(e);
+      setToken(e.message + "\n" + e.cause);
+    }
   };
 
   useEffect(() => {
     const location = window.location;
-    const queryParam = location.search;
+    const currURL = new URL(location.toString());
+    const queryParam = currURL.searchParams;
 
-    const code = queryParam.match(/(?<=code=)([\w-]+[^&])/g);
+    // const code = queryParam.match(/(?<=code=)([\w-]+[^&])/g);
+    const code = queryParam.get("code");
 
-    if (code && tokenReqTry < 3) {
+    if (code && tokenReqTry < 3 && !token) {
       // token request
       tokenRequest(code);
       const tryNum = tokenReqTry + 1;
       setTokenReqTry(tryNum);
+    } else if (tokenReqTry >= 3) {
     }
   });
 
@@ -83,7 +97,7 @@ function App() {
           Learn React
         </a>
         <a href={authorizationRequest}>Login</a>
-        <output></output>
+        <p>{token}</p>
       </header>
     </div>
   );
