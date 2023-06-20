@@ -1,9 +1,11 @@
 import logo from "./logo.svg";
 import "./App.css";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
+  const [token, setToken] = useState("");
+  const [tokenReqTry, setTokenReqTry] = useState(0);
   const authzEndpoint =
     "https://auth.pingone.com/8bac8420-b828-49bd-9b22-c0a6e141d71e/as/authorize";
   const responseType = "code";
@@ -44,6 +46,7 @@ function App() {
 
     const json = await response.json();
 
+    setToken(json);
     console.log(json);
   };
 
@@ -53,9 +56,11 @@ function App() {
 
     const code = queryParam.match(/(?<=code=)([\w-]+[^&])/g);
 
-    if (code) {
+    if (code && tokenReqTry < 3) {
       // token request
       tokenRequest(code);
+      const tryNum = tokenReqTry + 1;
+      setTokenReqTry(tryNum);
     }
   });
 
@@ -78,6 +83,7 @@ function App() {
           Learn React
         </a>
         <a href={authorizationRequest}>Login</a>
+        <output></output>
       </header>
     </div>
   );
